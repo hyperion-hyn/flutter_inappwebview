@@ -1169,7 +1169,11 @@ public class InAppWebView: WKWebView, UIScrollViewDelegate, WKUIDelegate, WKNavi
             
             // da3717f25f824cc1baa32d812386d93f
             // dapp: 23df5e05a6524e9abfd20fb6297ee226
-            let javaScriptDappJS = javaScriptForDappBrowser(rpcURL: "https://ropsten.infura.io/v3/23df5e05a6524e9abfd20fb6297ee226", chainID: "3", addressHex: "0x8a957D9233d6EE6fDD015b1562163964925701C9")
+            // "https://ropsten.infura.io/v3/23df5e05a6524e9abfd20fb6297ee226"
+            // "3"
+            // "0x8a957D9233d6EE6fDD015b1562163964925701C9"
+            
+            let javaScriptDappJS = javaScriptForDappBrowser(rpcURL: options.rpcUrl, chainID: "\(options.chainId)", addressHex: options.walletAddress)
             let javaScriptDappBrowserJSScript = WKUserScript(source: javaScriptDappJS, injectionTime: .atDocumentStart, forMainFrameOnly: false)
             configuration.userContentController.addUserScript(javaScriptDappBrowserJSScript)
             

@@ -60,6 +60,9 @@ public class InAppWebViewOptions: Options<InAppWebView> {
     var maximumZoomScale = 1.0
     var minimumZoomScale = 1.0
     var contentInsetAdjustmentBehavior = 2 // UIScrollView.ContentInsetAdjustmentBehavior.never
+    var walletAddress = "";
+    var rpcUrl = "";
+    var chainId = 0;
     
     override init(){
         super.init()
@@ -106,6 +109,10 @@ public class InAppWebViewOptions: Options<InAppWebView> {
             realOptions["isPagingEnabled"] = webView.scrollView.isPagingEnabled
             realOptions["maximumZoomScale"] = webView.scrollView.maximumZoomScale
             realOptions["minimumZoomScale"] = webView.scrollView.minimumZoomScale
+
+            realOptions["walletAddress"] = walletAddress
+            realOptions["rpcUrl"] = rpcUrl
+            realOptions["chainId"] = chainId
         }
         return realOptions
     }
