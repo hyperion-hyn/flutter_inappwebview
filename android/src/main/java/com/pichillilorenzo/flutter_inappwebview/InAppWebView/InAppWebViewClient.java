@@ -2,11 +2,11 @@ package com.pichillilorenzo.flutter_inappwebview.InAppWebView;
 
 import android.annotation.TargetApi;
 import android.graphics.Bitmap;
-import android.net.http.SslCertificate;
 import android.net.http.SslError;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Message;
+import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.ClientCertRequest;
@@ -25,30 +25,26 @@ import android.webkit.WebViewClient;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.pichillilorenzo.flutter_inappwebview.AphaWeb3.web3.JsInjectorResponse;
 import com.pichillilorenzo.flutter_inappwebview.CredentialDatabase.Credential;
 import com.pichillilorenzo.flutter_inappwebview.CredentialDatabase.CredentialDatabase;
 import com.pichillilorenzo.flutter_inappwebview.InAppBrowser.InAppBrowserActivity;
 import com.pichillilorenzo.flutter_inappwebview.JavaScriptBridgeInterface;
-import com.pichillilorenzo.flutter_inappwebview.Shared;
 import com.pichillilorenzo.flutter_inappwebview.Util;
+import com.pichillilorenzo.flutter_inappwebview.AphaWeb3.web3.JsInjectorClient;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
 import io.flutter.plugin.common.MethodChannel;
+import okhttp3.HttpUrl;
 
 public class InAppWebViewClient extends WebViewClient {
 
@@ -58,19 +54,26 @@ public class InAppWebViewClient extends WebViewClient {
   public MethodChannel channel;
   private static int previousAuthRequestFailureCount = 0;
   private static List<Credential> credentialsProposed = null;
+  private final Object lock = new Object();
+  private boolean isInjected;
+  private final JsInjectorClient jsInjectorClient;
 
-  public InAppWebViewClient(Object obj) {
+  public InAppWebViewClient(Object obj, JsInjectorClient jsInjectorClient) {
     super();
     if (obj instanceof InAppBrowserActivity)
       this.inAppBrowserActivity = (InAppBrowserActivity) obj;
     else if (obj instanceof FlutterWebView)
       this.flutterWebView = (FlutterWebView) obj;
     this.channel = (this.inAppBrowserActivity != null) ? this.inAppBrowserActivity.channel : this.flutterWebView.channel;
+    this.jsInjectorClient = jsInjectorClient;
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+    synchronized (lock) {
+      isInjected = false;
+    }
     InAppWebView webView = (InAppWebView) view;
     if (webView.options.useShouldOverrideUrlLoading) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -596,12 +599,12 @@ public class InAppWebViewClient extends WebViewClient {
 
     final InAppWebView webView = (InAppWebView) view;
 
-    if (webView.options.useShouldInterceptRequest) {
-      WebResourceResponse onShouldInterceptResponse = onShouldInterceptRequest(url);
+    /*if (webView.options.useShouldInterceptRequest) {
+      WebResourceResponse onShouldInterceptResponse = onShouldInterceptRequestOld(url);
       if (onShouldInterceptResponse != null) {
         return onShouldInterceptResponse;
       }
-    }
+    }*/
 
     URI uri;
     try {
@@ -672,7 +675,7 @@ public class InAppWebViewClient extends WebViewClient {
     String url = request.getUrl().toString();
 
     if (webView.options.useShouldInterceptRequest) {
-      WebResourceResponse onShouldInterceptResponse = onShouldInterceptRequest(request);
+      WebResourceResponse onShouldInterceptResponse = onShouldInterceptRequest(view, request);
       if (onShouldInterceptResponse != null) {
         return onShouldInterceptResponse;
       }
@@ -681,7 +684,98 @@ public class InAppWebViewClient extends WebViewClient {
     return shouldInterceptRequest(view, url);
   }
 
-  public WebResourceResponse onShouldInterceptRequest(Object request) {
+  @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+  public WebResourceResponse onShouldInterceptRequest(WebView view, WebResourceRequest request) {
+    if (request == null) {
+      return null;
+    }
+    if (!request.getMethod().equalsIgnoreCase("GET") || !request.isForMainFrame()) {
+      if (request.getMethod().equalsIgnoreCase("GET")
+              && (request.getUrl().toString().contains(".js")
+              || request.getUrl().toString().contains("json")
+              || request.getUrl().toString().contains("css"))) {
+        synchronized (lock) {
+          if (!isInjected) {
+            injectScriptFile(view);
+            isInjected = true;
+          }
+        }
+      }
+      super.shouldInterceptRequest(view, request);
+      return null;
+    }
+
+    //check for known extensions
+    /*if (handleTrustedExtension(request.getUrl().toString()))
+    {
+      return null;
+    }*/
+
+    HttpUrl httpUrl = HttpUrl.parse(request.getUrl().toString());
+    if (httpUrl == null) {
+      return null;
+    }
+    Map<String, String> headers = request.getRequestHeaders();
+
+    JsInjectorResponse response;
+    try {
+      response = jsInjectorClient.loadUrl(httpUrl.toString(), headers);
+    } catch (Exception ex) {
+      return null;
+    }
+    if (response == null || response.isRedirect) {
+      return null;
+    } else if (TextUtils.isEmpty(response.data)){
+      return null;
+    } else {
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(response.data.getBytes());
+      WebResourceResponse webResourceResponse = new WebResourceResponse(
+              response.mime, response.charset, inputStream);
+      synchronized (lock) {
+        isInjected = true;
+      }
+      return webResourceResponse;
+    }
+  }
+
+  public void onReload() {
+    synchronized (lock) {
+      isInjected = false;
+    }
+  }
+
+  private void injectScriptFile(WebView view) {
+    String js = jsInjectorClient.assembleJs(view.getContext(), "%1$s%2$s");
+    byte[] buffer = js.getBytes();
+    String encoded = Base64.encodeToString(buffer, Base64.NO_WRAP);
+
+    view.post(() -> view.loadUrl("javascript:(function() {" +
+            "var parent = document.getElementsByTagName('head').item(0);" +
+            "var script = document.createElement('script');" +
+            "script.type = 'text/javascript';" +
+            // Tell the browser to BASE64-decode the string into your script !!!
+            "script.innerHTML = window.atob('" + encoded + "');" +
+            "parent.appendChild(script)" +
+            "})()"));
+  }
+
+  /*private boolean handleTrustedExtension(String url)
+  {
+    String[] strArray = context.getResources().getStringArray(R.array.TrustedExtensions);
+    for (String item : strArray)
+    {
+      String[] split = item.split(",");
+      if (url.endsWith(split[1]))
+      {
+        useKnownOpenIntent(split[0], url);
+        return true;
+      }
+    }
+
+    return false;
+  }
+*/
+  public WebResourceResponse onShouldInterceptRequestOld(Object request) {
     String url = request instanceof String ? (String) request : null;
     String method = "GET";
     Map<String, String> headers = null;

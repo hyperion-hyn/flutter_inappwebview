@@ -96,6 +96,9 @@ public class InAppWebViewOptions implements Options<InAppWebView> {
   public Map<String, Object> rendererPriorityPolicy = new HashMap<>();
   public Boolean useShouldInterceptRequest = false;
   public Boolean useOnRenderProcessGone = false;
+  public String walletAddress = "";
+  public String rpcUrl = "";
+  public int chainId;
 
   @Override
   public InAppWebViewOptions parse(Map<String, Object> options) {
@@ -335,6 +338,15 @@ public class InAppWebViewOptions implements Options<InAppWebView> {
         case "useOnRenderProcessGone":
           useOnRenderProcessGone = (Boolean) value;
           break;
+        case "walletAddress":
+          walletAddress = (String) value;
+          break;
+        case "rpcUrl":
+          rpcUrl = (String) value;
+          break;
+        case "chainId":
+          chainId = (Integer) value;
+          break;
       }
     }
 
@@ -420,6 +432,9 @@ public class InAppWebViewOptions implements Options<InAppWebView> {
     options.put("rendererPriorityPolicy", rendererPriorityPolicy);
     options.put("useShouldInterceptRequest", useShouldInterceptRequest);
     options.put("useOnRenderProcessGone", useOnRenderProcessGone);
+    options.put("walletAddress", walletAddress);
+    options.put("rpcUrl", rpcUrl);
+    options.put("chainId", chainId);
     return options;
   }
 

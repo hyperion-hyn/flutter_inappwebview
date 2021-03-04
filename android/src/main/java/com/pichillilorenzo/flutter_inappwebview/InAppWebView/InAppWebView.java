@@ -42,11 +42,12 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.Keep;
 import androidx.annotation.RequiresApi;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
+import com.pichillilorenzo.flutter_inappwebview.AphaWeb3.web3.JsInjectorClient;
+import com.pichillilorenzo.flutter_inappwebview.AphaWeb3.web3.entity.Address;
 import com.pichillilorenzo.flutter_inappwebview.ContentBlocker.ContentBlocker;
 import com.pichillilorenzo.flutter_inappwebview.ContentBlocker.ContentBlockerAction;
 import com.pichillilorenzo.flutter_inappwebview.ContentBlocker.ContentBlockerHandler;
@@ -60,9 +61,6 @@ import com.pichillilorenzo.flutter_inappwebview.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -592,6 +590,22 @@ final public class InAppWebView extends InputAwareWebView {
           "  });" +
           "})();";
 
+  private JsInjectorClient jsInjectorClient;
+  /*@Nullable
+  private OnSignTransactionListener onSignTransactionListener;
+  @Nullable
+  private OnSignMessageListener onSignMessageListener;
+  @Nullable
+  private OnSignPersonalMessageListener onSignPersonalMessageListener;
+  @Nullable
+  private OnSignTypedMessageListener onSignTypedMessageListener;
+  @Nullable
+  private OnEthCallListener onEthCallListener;
+  @Nullable
+  private OnVerifyListener onVerifyListener;
+  @Nullable
+  private OnGetBalanceListener onGetBalanceListener;*/
+
   public InAppWebView(Context context) {
     super(context);
   }
@@ -619,6 +633,10 @@ final public class InAppWebView extends InputAwareWebView {
 
   @Override
   public void reload() {
+    Log.e("!!!!!4545","bbb" + options.walletAddress);
+    jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
+    jsInjectorClient.setRpcUrl(options.rpcUrl);
+    jsInjectorClient.setChainId(options.chainId);
     super.reload();
   }
 
@@ -630,11 +648,17 @@ final public class InAppWebView extends InputAwareWebView {
 
     javaScriptBridgeInterface = new JavaScriptBridgeInterface((isFromInAppBrowserActivity) ? inAppBrowserActivity : flutterWebView);
     addJavascriptInterface(javaScriptBridgeInterface, JavaScriptBridgeInterface.name);
+//    addJavascriptInterface(new SignCallbackJSInterface(
+//            this), "alpha");
 
     inAppWebViewChromeClient = new InAppWebViewChromeClient((isFromInAppBrowserActivity) ? inAppBrowserActivity : flutterWebView);
     setWebChromeClient(inAppWebViewChromeClient);
 
-    inAppWebViewClient = new InAppWebViewClient((isFromInAppBrowserActivity) ? inAppBrowserActivity : flutterWebView);
+    jsInjectorClient = new JsInjectorClient(getContext());
+    jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
+    jsInjectorClient.setRpcUrl(options.rpcUrl);
+    jsInjectorClient.setChainId(options.chainId);
+    inAppWebViewClient = new InAppWebViewClient((isFromInAppBrowserActivity) ? inAppBrowserActivity : flutterWebView, jsInjectorClient);
     setWebViewClient(inAppWebViewClient);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_VIEW_RENDERER_CLIENT_BASIC_USAGE)) {
@@ -1957,4 +1981,97 @@ final public class InAppWebView extends InputAwareWebView {
     headlessHandler.removeCallbacksAndMessages(null);
     super.destroy();
   }
+
+  /*private final OnSignTransactionListener innerOnSignTransactionListener = new OnSignTransactionListener() {
+    @Override
+    public void onSignTransaction(Web3Transaction transaction, String url) {
+      if (onSignTransactionListener != null) {
+        onSignTransactionListener.onSignTransaction(transaction, url);
+      }
+    }
+  };
+
+  private final OnSignMessageListener innerOnSignMessageListener = new OnSignMessageListener() {
+    @Override
+    public void onSignMessage(EthereumMessage message) {
+      Log.e("!!!!!onSignMessage",message.getMessage());
+      if (onSignMessageListener != null) {
+        onSignMessageListener.onSignMessage(message);
+      }
+    }
+  };
+
+  private final OnSignPersonalMessageListener innerOnSignPersonalMessageListener = new OnSignPersonalMessageListener() {
+    @Override
+    public void onSignPersonalMessage(EthereumMessage message) {
+      Log.e("!!!!!onSignPersonalMessage",message.getMessage());
+      onSignPersonalMessageListener.onSignPersonalMessage(message);
+    }
+  };
+
+  private final OnSignTypedMessageListener innerOnSignTypedMessageListener = new OnSignTypedMessageListener() {
+    @Override
+    public void onSignTypedMessage(EthereumTypedMessage message) {
+      Log.e("!!!!!onSignTypedMessage",message.getMessage());
+      onSignTypedMessageListener.onSignTypedMessage(message);
+    }
+  };
+
+  private final OnEthCallListener innerOnEthCallListener = new OnEthCallListener()
+  {
+    @Override
+    public void onEthCall(Web3Call txData)
+    {
+      Log.e("!!!!!onEthCall",txData.payload);
+      onEthCallListener.onEthCall(txData);
+    }
+  };
+
+  private final OnVerifyListener innerOnVerifyListener = new OnVerifyListener() {
+    @Override
+    public void onVerify(String message, String signHex) {
+      Log.e("!!!!!onVerify",message);
+      if (onVerifyListener != null) {
+        onVerifyListener.onVerify(message, signHex);
+      }
+    }
+  };
+
+  private final OnGetBalanceListener innerOnGetBalanceListener = new OnGetBalanceListener() {
+    @Override
+    public void onGetBalance(String balance) {
+      Log.e("!!!!!onGetBalance",balance);
+      if (onGetBalanceListener != null) {
+        onGetBalanceListener.onGetBalance(balance);
+      }
+    }
+  };
+
+  public void setOnSignTransactionListener(@Nullable OnSignTransactionListener onSignTransactionListener) {
+    this.onSignTransactionListener = onSignTransactionListener;
+  }
+
+  public void setOnSignMessageListener(@Nullable OnSignMessageListener onSignMessageListener) {
+    this.onSignMessageListener = onSignMessageListener;
+  }
+
+  public void setOnSignPersonalMessageListener(@Nullable OnSignPersonalMessageListener onSignPersonalMessageListener) {
+    this.onSignPersonalMessageListener = onSignPersonalMessageListener;
+  }
+
+  public void setOnSignTypedMessageListener(@Nullable OnSignTypedMessageListener onSignTypedMessageListener) {
+    this.onSignTypedMessageListener = onSignTypedMessageListener;
+  }
+
+  public void setOnEthCallListener(@Nullable OnEthCallListener onEthCallListener) {
+    this.onEthCallListener = onEthCallListener;
+  }
+
+  public void setOnVerifyListener(@Nullable OnVerifyListener onVerifyListener) {
+    this.onVerifyListener = onVerifyListener;
+  }
+
+  public void setOnGetBalanceListener(@Nullable OnGetBalanceListener onGetBalanceListener) {
+    this.onGetBalanceListener = onGetBalanceListener;
+  }*/
 }

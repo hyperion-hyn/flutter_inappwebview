@@ -6,6 +6,7 @@ import 'X509Certificate/x509_certificate.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
 
+import 'dapp_options.dart';
 import 'in_app_browser.dart';
 import 'webview.dart';
 import 'webview_options.dart';
@@ -1826,10 +1827,13 @@ class InAppWebViewGroupOptions {
   ///iOS-specific options.
   IOSInAppWebViewOptions ios;
 
-  InAppWebViewGroupOptions({this.crossPlatform, this.android, this.ios}) {
+  DappOptions dappOptions;
+
+  InAppWebViewGroupOptions({this.crossPlatform, this.android, this.ios, this.dappOptions}) {
     this.crossPlatform = this.crossPlatform ?? InAppWebViewOptions();
     this.android = this.android ?? AndroidInAppWebViewOptions();
     this.ios = this.ios ?? IOSInAppWebViewOptions();
+    this.dappOptions = this.dappOptions;
   }
 
   Map<String, dynamic> toMap() {
@@ -1839,6 +1843,7 @@ class InAppWebViewGroupOptions {
       options.addAll(this.android?.toMap() ?? {});
     else if (Platform.isIOS) options.addAll(this.ios?.toMap() ?? {});
 
+    options.addAll(this.dappOptions?.toJson() ?? {});
     return options;
   }
 
@@ -1854,6 +1859,8 @@ class InAppWebViewGroupOptions {
     else if (Platform.isIOS)
       inAppWebViewGroupOptions.ios = IOSInAppWebViewOptions.fromMap(options);
 
+    inAppWebViewGroupOptions.dappOptions =
+        DappOptions.fromJson(options);
     return inAppWebViewGroupOptions;
   }
 
@@ -1909,6 +1916,7 @@ class InAppBrowserClassOptions {
       options.addAll(this.ios?.toMap() ?? {});
       options.addAll(this.inAppWebViewGroupOptions?.ios?.toMap() ?? {});
     }
+    options.addAll(this.inAppWebViewGroupOptions?.dappOptions?.toJson() ?? {});
 
     return options;
   }
@@ -1942,6 +1950,8 @@ class InAppBrowserClassOptions {
       inAppBrowserClassOptions.inAppWebViewGroupOptions.ios =
           IOSInAppWebViewOptions.fromMap(options);
     }
+    inAppBrowserClassOptions.inAppWebViewGroupOptions.dappOptions =
+        DappOptions.fromJson(options);
 
     return inAppBrowserClassOptions;
   }

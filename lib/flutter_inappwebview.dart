@@ -38,3 +38,4 @@ export 'src/web_storage_manager.dart';
 export 'src/context_menu.dart';
 export 'src/web_storage.dart';
 export 'src/X509Certificate/main.dart';
+export 'src/dapp_options.dart';

@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.pichillilorenzo.flutter_inappwebview-flutter_inappwebview.iml" filepath="$PROJECT_DIR$/.idea/modules/com.pichillilorenzo.flutter_inappwebview-flutter_inappwebview.iml" group="flutter_inappwebview" />
       <module fileurl="file://$PROJECT_DIR$/flutter_inappwebview.iml" filepath="$PROJECT_DIR$/flutter_inappwebview.iml" />
     </modules>
   </component>
