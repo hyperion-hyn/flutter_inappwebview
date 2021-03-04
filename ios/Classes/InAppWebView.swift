@@ -60,6 +60,103 @@ window.\(JAVASCRIPT_BRIDGE_NAME).callHandler = function() {
 }
 """
 
+
+// ToDo: window.ethereum = web3.currentProvider
+fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addressHex: String) -> String {
+
+    var javaScriptDappJS: String = ""
+    guard
+            let bundlePath = Bundle.main.path(forResource: "AlphaWalletWeb3Provider", ofType: "bundle"),
+            let bundle = Bundle(path: bundlePath) else { return javaScriptDappJS}
+    if let filepath = bundle.path(forResource: "AlphaWallet-min", ofType: "js") {
+        do {
+            javaScriptDappJS += try String(contentsOfFile: filepath)
+        } catch { }
+    }
+    
+    let defaultJS = """
+           //Space is needed here because it is sometimes cut off by websites.
+
+           const rpcURL = "\(rpcURL)"
+           const chainID = "\(chainID)"
+           const addressHex = "\(addressHex)"
+
+           function executeCallback (id, error, value) {
+               AlphaWallet.executeCallback(id, error, value)
+           }
+
+           function printPostMessage () {
+               alert("printPostMessage" + addressHex)
+           }
+
+           window.AlphaWallet.init(rpcURL, {
+               getAccounts: function (cb) { cb(null, [addressHex]) },
+               processTransaction: function (tx, cb){
+                   console.log('signing a transaction', tx)
+                   const { id = 8888 } = tx
+                   AlphaWallet.addCallback(id, cb)
+                   webkit.messageHandlers.signTransaction.postMessage({"name": "signTransaction", "object":     tx, id: id})
+               },
+               signMessage: function (msgParams, cb) {
+                   const { data } = msgParams
+                   const { id = 8888 } = msgParams
+                   console.log("signing a message", msgParams)
+                   AlphaWallet.addCallback(id, cb)
+                   webkit.messageHandlers.signMessage.postMessage({"name": "signMessage", "object": { data }, id:    id} )
+               },
+               signPersonalMessage: function (msgParams, cb) {
+                   const { data } = msgParams
+                   const { id = 8888 } = msgParams
+                   console.log("signing a personal message", msgParams)
+                   AlphaWallet.addCallback(id, cb)
+                   webkit.messageHandlers.signPersonalMessage.postMessage({"name": "signPersonalMessage", "object":  { data }, id: id})
+               },
+               signTypedMessage: function (msgParams, cb) {
+                   const { data } = msgParams
+                   const { id = 8888 } = msgParams
+                   console.log("signing a typed message", msgParams)
+                   AlphaWallet.addCallback(id, cb)
+                   webkit.messageHandlers.signTypedMessage.postMessage({"name": "signTypedMessage", "object":     { data }, id: id})
+               },
+               ethCall: function (msgParams, cb) {
+                   const data = msgParams
+                   const { id = Math.floor((Math.random() * 100000) + 1) } = msgParams
+                   console.log("eth_call", msgParams)
+                   AlphaWallet.addCallback(id, cb)
+                   webkit.messageHandlers.ethCall.postMessage({"name": "ethCall", "object": data, id: id})
+               },
+               enable: function() {
+                  return new Promise(function(resolve, reject) {
+                      //send back the coinbase account as an array of one
+                      resolve([addressHex])
+                  })
+               }
+           }, {
+               address: addressHex,
+               networkVersion: chainID
+           })
+
+           window.web3.setProvider = function () {
+               console.debug('AlphaWallet Wallet - overrode web3.setProvider')
+           }
+
+           window.web3.eth.defaultAccount = addressHex
+
+           window.web3.version.getNetwork = function(cb) {
+               cb(null, chainID)
+           }
+
+           window.web3.eth.getCoinbase = function(cb) {
+                return cb(null, addressHex)
+           }
+
+           window.ethereum = web3.currentProvider
+          
+         """
+    
+    return javaScriptDappJS + defaultJS
+}
+
 // the message needs to be concatenated with '' in order to have the same behavior like on Android
 let consoleLogJS = """
 (function(console) {
@@ -1069,6 +1166,12 @@ public class InAppWebView: WKWebView, UIScrollViewDelegate, WKUIDelegate, WKNavi
             let javaScriptBridgeJSScript = WKUserScript(source: javaScriptBridgeJS, injectionTime: .atDocumentStart, forMainFrameOnly: false)
             configuration.userContentController.addUserScript(javaScriptBridgeJSScript)
             configuration.userContentController.add(self, name: "callHandler")
+            
+            // da3717f25f824cc1baa32d812386d93f
+            // dapp: 23df5e05a6524e9abfd20fb6297ee226
+            let javaScriptDappJS = javaScriptForDappBrowser(rpcURL: "https://ropsten.infura.io/v3/23df5e05a6524e9abfd20fb6297ee226", chainID: "3", addressHex: "0x8a957D9233d6EE6fDD015b1562163964925701C9")
+            let javaScriptDappBrowserJSScript = WKUserScript(source: javaScriptDappJS, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+            configuration.userContentController.addUserScript(javaScriptDappBrowserJSScript)
             
             let consoleLogJSScript = WKUserScript(source: consoleLogJS, injectionTime: .atDocumentStart, forMainFrameOnly: false)
             configuration.userContentController.addUserScript(consoleLogJSScript)
