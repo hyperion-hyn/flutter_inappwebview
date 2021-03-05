@@ -60,6 +60,8 @@ window.\(JAVASCRIPT_BRIDGE_NAME).callHandler = function() {
 }
 """
 
+//flutter_inappwebview.callHandler('signMessage', id, data);
+
 
 // ToDo: window.ethereum = web3.currentProvider
 fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addressHex: String) -> String {
@@ -85,45 +87,50 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
                AlphaWallet.executeCallback(id, error, value)
            }
 
-           function printPostMessage () {
-               alert("printPostMessage" + addressHex)
-           }
-
            window.AlphaWallet.init(rpcURL, {
                getAccounts: function (cb) { cb(null, [addressHex]) },
                processTransaction: function (tx, cb){
                    console.log('signing a transaction', tx)
                    const { id = 8888 } = tx
                    AlphaWallet.addCallback(id, cb)
-                   webkit.messageHandlers.signTransaction.postMessage({"name": "signTransaction", "object":     tx, id: id})
+
+                var gasLimit = tx.gasLimit || tx.gas || null;
+                var gasPrice = tx.gasPrice || null;
+                var data = tx.data || null;
+                var nonce = tx.nonce || -1;
+                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
                },
                signMessage: function (msgParams, cb) {
                    const { data } = msgParams
                    const { id = 8888 } = msgParams
                    console.log("signing a message", msgParams)
                    AlphaWallet.addCallback(id, cb)
-                   webkit.messageHandlers.signMessage.postMessage({"name": "signMessage", "object": { data }, id:    id} )
+
+                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signMessage', id, data)
                },
                signPersonalMessage: function (msgParams, cb) {
                    const { data } = msgParams
                    const { id = 8888 } = msgParams
                    console.log("signing a personal message", msgParams)
                    AlphaWallet.addCallback(id, cb)
-                   webkit.messageHandlers.signPersonalMessage.postMessage({"name": "signPersonalMessage", "object":  { data }, id: id})
+                  
+                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signPersonalMessage', id, data)
                },
                signTypedMessage: function (msgParams, cb) {
                    const { data } = msgParams
                    const { id = 8888 } = msgParams
                    console.log("signing a typed message", msgParams)
                    AlphaWallet.addCallback(id, cb)
-                   webkit.messageHandlers.signTypedMessage.postMessage({"name": "signTypedMessage", "object":     { data }, id: id})
+
+                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTypedMessage', id, JSON.stringify(msgParams))
                },
                ethCall: function (msgParams, cb) {
                    const data = msgParams
                    const { id = Math.floor((Math.random() * 100000) + 1) } = msgParams
                    console.log("eth_call", msgParams)
                    AlphaWallet.addCallback(id, cb)
-                   webkit.messageHandlers.ethCall.postMessage({"name": "ethCall", "object": data, id: id})
+
+                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('ethCall', id, msgParams.to, msgParams.data)
                },
                enable: function() {
                   return new Promise(function(resolve, reject) {
