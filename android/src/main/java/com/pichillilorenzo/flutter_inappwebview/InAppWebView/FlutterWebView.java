@@ -204,7 +204,6 @@ public class FlutterWebView implements PlatformView, MethodCallHandler  {
         result.success(true);
         break;
       case "reload":
-        Log.e("!!!!!4545","aaa");
         if (webView != null)
           webView.reload();
         result.success(true);

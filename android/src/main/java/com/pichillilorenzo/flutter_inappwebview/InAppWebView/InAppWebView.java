@@ -633,7 +633,6 @@ final public class InAppWebView extends InputAwareWebView {
 
   @Override
   public void reload() {
-    Log.e("!!!!!4545","bbb" + options.walletAddress);
     jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
     jsInjectorClient.setRpcUrl(options.rpcUrl);
     jsInjectorClient.setChainId(options.chainId);

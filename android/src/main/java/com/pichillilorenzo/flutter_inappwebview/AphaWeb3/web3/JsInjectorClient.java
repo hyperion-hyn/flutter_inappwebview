@@ -96,7 +96,6 @@ public class JsInjectorClient {
 
     @Nullable
     private JsInjectorResponse buildResponse(Response response) {
-        Log.e("!!!!!4545","ccc");
         String body = null;
         int code = response.code();
         try {
@@ -205,7 +204,6 @@ public class JsInjectorClient {
 
     private String loadInitJs(Context context) {
         String initSrc = loadFile(context, R.raw.init);
-        Log.e("!!!!!4545","ddd" + walletAddress);
         String address = walletAddress == null ? Address.EMPTY.toString() : Keys.toChecksumAddress(walletAddress.toString());
         return String.format(initSrc, address, rpcUrl, chainId);
     }
