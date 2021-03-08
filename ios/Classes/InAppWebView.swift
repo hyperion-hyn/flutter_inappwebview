@@ -89,16 +89,27 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
 
            window.AlphaWallet.init(rpcURL, {
                getAccounts: function (cb) { cb(null, [addressHex]) },
+               processSignTransaction: function (tx, cb){
+                   console.log('signing a transaction', tx);
+                   const { id = 8888 } = tx;
+                   AlphaWallet.addCallback(id, cb);
+
+                   var gasLimit = tx.gasLimit || tx.gas || null;
+                   var gasPrice = tx.gasPrice || null;
+                   var data = tx.data || null;
+                   var nonce = tx.nonce || -1;
+                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
+               },
                processTransaction: function (tx, cb){
                    console.log('signing a transaction', tx)
                    const { id = 8888 } = tx
                    AlphaWallet.addCallback(id, cb)
 
-                var gasLimit = tx.gasLimit || tx.gas || null;
-                var gasPrice = tx.gasPrice || null;
-                var data = tx.data || null;
-                var nonce = tx.nonce || -1;
-                window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
+                   var gasLimit = tx.gasLimit || tx.gas || null;
+                   var gasPrice = tx.gasPrice || null;
+                   var data = tx.data || null;
+                   var nonce = tx.nonce || -1;
+                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
                },
                signMessage: function (msgParams, cb) {
                    const { data } = msgParams
