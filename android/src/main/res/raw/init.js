@@ -71,9 +71,6 @@ window.AlphaWallet.init(rpcURL, {
           resolve([addressHex])
       })
   },
-  publishTransaction: function(methodName) {
-            console.log("publishTransaction", methodName)
-      },
 }, {
     address: addressHex,
     networkVersion: chainID
