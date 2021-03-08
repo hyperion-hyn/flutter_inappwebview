@@ -48661,6 +48661,7 @@ function HookedWalletSubprovider(opts){
   if (opts.getAccounts) self.getAccounts = opts.getAccounts
   // high level override
   if (opts.processTransaction) self.processTransaction = opts.processTransaction
+  if (opts.processSignTransaction) self.processSignTransaction = opts.processSignTransaction
   if (opts.processMessage) self.processMessage = opts.processMessage
   if (opts.processPersonalMessage) self.processPersonalMessage = opts.processPersonalMessage
   if (opts.processTypedMessage) self.processTypedMessage = opts.processTypedMessage
@@ -48728,13 +48729,18 @@ HookedWalletSubprovider.prototype.handleRequest = function(payload, next, end){
       return
 
     case 'eth_signTransaction':
-      txParams = payload.params[0]
-      txParams.chainType = "ETH"
-      waterfall([
-        // (cb) => self.validateTransaction(txParams, cb),
-        (cb) => self.processSignTransaction(txParams, cb),
-      ], end)
-      return
+      console.log('eth_signTransaction1111'),
+            txParams = payload.params[0]
+            txParams.chainType = "ETH"
+            waterfall([
+              // (cb) => self.validateTransaction(txParams, cb),
+              (cb) => {
+                  console.log('eth_signTransaction2222'),
+                self.processSignTransaction(txParams, cb),
+                  console.log('eth_signTransaction3333')}
+
+          ], end)
+            return
 
     case 'eth_sign':
       // process normally
