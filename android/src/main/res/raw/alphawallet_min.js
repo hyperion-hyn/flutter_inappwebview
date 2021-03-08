@@ -48729,18 +48729,13 @@ HookedWalletSubprovider.prototype.handleRequest = function(payload, next, end){
       return
 
     case 'eth_signTransaction':
-      console.log('eth_signTransaction1111'),
-            txParams = payload.params[0]
-            txParams.chainType = "ETH"
-            waterfall([
-              // (cb) => self.validateTransaction(txParams, cb),
-              (cb) => {
-                  console.log('eth_signTransaction2222'),
-                self.processSignTransaction(txParams, cb),
-                  console.log('eth_signTransaction3333')}
-
-          ], end)
-            return
+      txParams = payload.params[0]
+      txParams.chainType = "ETH"
+      waterfall([
+        // (cb) => self.validateTransaction(txParams, cb),
+        (cb) => self.processSignTransaction(txParams, cb),
+      ], end)
+      return
 
     case 'eth_sign':
       // process normally
