@@ -65,17 +65,21 @@ window.\(JAVASCRIPT_BRIDGE_NAME).callHandler = function() {
 
 // ToDo: window.ethereum = web3.currentProvider
 fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addressHex: String) -> String {
-    
+
     var javaScriptDappJS: String = ""
-    guard
-        let bundlePath = Bundle.main.path(forResource: "AlphaWalletWeb3Provider", ofType: "bundle"),
-        let bundle = Bundle(path: bundlePath) else { return javaScriptDappJS}
-    if let filepath = bundle.path(forResource: "AlphaWallet-min", ofType: "js") {
-        do {
-            javaScriptDappJS += try String(contentsOfFile: filepath)
-        } catch { }
+//    guard
+//        let bundlePath = Bundle.main.path(forResource: "AlphaWalletWeb3Provider", ofType: "bundle"),
+//        let bundle = Bundle(path: bundlePath) else { return javaScriptDappJS}
+    guard let filepath = Bundle.main.path(forResource: "alphawallet_min", ofType: "js") else {
+        return javaScriptDappJS
     }
+    //print("[ios] javaScriptForDappBrowser, filepath:\(filepath)")
+
+    do {
+        javaScriptDappJS += try String(contentsOfFile: filepath)
+    } catch { }
     
+
     let defaultJS = """
            //Space is needed here because it is sometimes cut off by websites.
 
