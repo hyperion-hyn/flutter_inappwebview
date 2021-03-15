@@ -16,6 +16,7 @@ import android.os.Message;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ActionMode;
@@ -633,9 +634,11 @@ final public class InAppWebView extends InputAwareWebView {
 
   @Override
   public void reload() {
-    jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
-    jsInjectorClient.setRpcUrl(options.rpcUrl);
-    jsInjectorClient.setChainId(options.chainId);
+    if(!TextUtils.isEmpty(options.walletAddress)){
+      jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
+      jsInjectorClient.setRpcUrl(options.rpcUrl);
+      jsInjectorClient.setChainId(options.chainId);
+    }
     super.reload();
   }
 
@@ -654,9 +657,11 @@ final public class InAppWebView extends InputAwareWebView {
     setWebChromeClient(inAppWebViewChromeClient);
 
     jsInjectorClient = new JsInjectorClient(getContext());
-    jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
-    jsInjectorClient.setRpcUrl(options.rpcUrl);
-    jsInjectorClient.setChainId(options.chainId);
+    if(!TextUtils.isEmpty(options.walletAddress)){
+      jsInjectorClient.setWalletAddress(new Address(options.walletAddress));
+      jsInjectorClient.setRpcUrl(options.rpcUrl);
+      jsInjectorClient.setChainId(options.chainId);
+    }
     inAppWebViewClient = new InAppWebViewClient((isFromInAppBrowserActivity) ? inAppBrowserActivity : flutterWebView, jsInjectorClient);
     setWebViewClient(inAppWebViewClient);
 
