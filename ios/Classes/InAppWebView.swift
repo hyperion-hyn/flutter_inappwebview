@@ -94,7 +94,7 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
            window.AlphaWallet.init(rpcURL, {
                getAccounts: function (cb) { cb(null, [addressHex]) },
                processSignTransaction: function (tx, cb){
-                   console.log('signing a transaction', tx);
+                   console.log('processSignTransaction a transaction', tx);
                    const { id = 8888 } = tx;
                    AlphaWallet.addCallback(id, cb);
 
@@ -102,10 +102,10 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
                    var gasPrice = tx.gasPrice || null;
                    var data = tx.data || null;
                    var nonce = tx.nonce || -1;
-                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
+                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('processSignTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
                },
                processTransaction: function (tx, cb){
-                   console.log('signing a transaction', tx)
+                   console.log('processTransaction a transaction', tx)
                    const { id = 8888 } = tx
                    AlphaWallet.addCallback(id, cb)
 
@@ -113,7 +113,7 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
                    var gasPrice = tx.gasPrice || null;
                    var data = tx.data || null;
                    var nonce = tx.nonce || -1;
-                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('signTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
+                   window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('processTransaction', id, tx.to || null, tx.value, nonce, gasLimit, gasPrice, data);
                },
                signMessage: function (msgParams, cb) {
                    const { data } = msgParams
@@ -148,6 +148,7 @@ fileprivate func javaScriptForDappBrowser(rpcURL: String, chainID: String, addre
                 window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('ethCall', id, msgParams.to, msgParams.data)
                },
                enable: function() {
+                  window.\(JAVASCRIPT_BRIDGE_NAME).callHandler('enable')
                   return new Promise(function(resolve, reject) {
                       //send back the coinbase account as an array of one
                       resolve([addressHex])
